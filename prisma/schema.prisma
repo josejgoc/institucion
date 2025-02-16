@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Notificacion {
+  id Int @id @default(autoincrement())
+  titulo String
+  profesorId Int
+  profesor Profesor @relation(fields: [profesorId], references: [id])
+}
+
+model Admin {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int @unique
+  nombre    String
+  rango     String
+  Usuario   Usuario @relation(fields: [usuarioId], references: [id])
+}
+
+model Estudiante {
+  id                                                        Int            @id @default(autoincrement())
+  nombres                                                   String
+  apellidos                                                 String
+  fechaNacimiento                                           DateTime
+  documentoIdentidad                                        String?
+  genero                                                    String
+  gradoId                                                   Int?
+  seccionId                                                 Int?
+  foto                                                      String?
+  verificado                                                Boolean        @default(false)
+  grado                                                     Grado?         @relation(fields: [gradoId], references: [id])
+  seccion                                                   Seccion?       @relation(fields: [seccionId], references: [id])
+  representantes                                            Representante_Estudiante[]
+  salud                                                     Estudiante_Salud?
+}
+
+model Estudiante_Salud {
+  estudianteId Int @unique
+  asmatico       Boolean @default(false)
+  parto_normal   Boolean @default(false)
+  duracion_embarazo Int @default(9)
+  convulsiones   Boolean @default(false)
+  medicamentos   Boolean @default(false)
+  control_medico Boolean @default(false)
+  infome_medico   Boolean @default(false)
+  intervencion_quirurgica Boolean @default(false)
+  impedimento_fisico Boolean @default(false)
+  impedimento_fisico_reason String @default("")
+  Estudiante Estudiante @relation(fields: [estudianteId], references: [id])
+  @@id([estudianteId])
+}
+
+
+
+model Profesor {
+  id              Int             @id @default(autoincrement())
+  usuarioId       Int             @unique
+  documentoIdentidad String
+  nombre          String 
+  nivelAcademico  String
+  fechaNacimiento DateTime
+  titulo          String
+  direccion       String
+  genero          String
+  gradoId         Int?
+  seccionId       Int?            @unique
+  telefono        String
+  ruta_imagen     String
+  grado           Grado?          @relation(fields: [gradoId], references: [id])
+  usuario         Usuario         @relation(fields: [usuarioId], references: [id])
+  seccion         Seccion?        @relation(fields: [seccionId], references: [id])
+  notificaciones  Notificacion[]
+}
+
+model Representante {
+  id                                                     Int          @unique @id @default(autoincrement())
+  usuarioId                                              Int          @unique
+  nombres                                                String
+  apellidos                                              String
+  telefono                                               String
+  direccion                                              String
+  genero                                                 String
+  documentoIdentidad                                     String
+  fechaNacimiento                                        DateTime
+  foto                                                   String?
+  ocupacion                                              String
+  Usuario                                                Usuario      @relation(fields: [usuarioId], references: [id])
+  Estudiantes                                            Representante_Estudiante[]
+}
+
+model Representante_Estudiante {
+  id     Int      @id @default(autoincrement())
+  representanteId Int
+  estudianteId    Int
+  parentesco      String
+  representante   Representante @relation(fields: [representanteId], references: [id])
+  estudiante      Estudiante    @relation(fields: [estudianteId], references: [id])
+}
+
+model Seccion {
+  id         Int          @id @default(autoincrement())
+  nombre     String
+  gradoId    Int
+  // relacion
+  grado      Grado @relation(fields: [gradoId], references: [id])
+  estudiantes Estudiante[]
+  profesor   Profesor?
+}
+
+model Grado {
+  id         Int          @id @default(autoincrement())
+  nombre     String
+  Secciones  Seccion[]
+  Estudiante Estudiante[]
+  Profesor   Profesor[]
+}
+
+model Usuario {
+  id            Int             @id @default(autoincrement())
+  correo        String          @unique
+  clave         String
+  isBlocked     Boolean         @default(false)
+  tipo          TypeUser        @default(representante)
+  admin         Admin?
+  profesor      Profesor?
+  representante Representante?
+}
+
+enum TypeUser {
+  admin
+  profesor
+  representante
+}
